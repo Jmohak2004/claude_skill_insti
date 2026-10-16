@@ -44,6 +44,9 @@ def main():
     args = parser.parse_args()
 
     conn = connect()
+    # Don't export things already proven done (form receipt / sent reply) since the last alert run.
+    from instincts import auto_complete
+    auto_complete(conn, conn.execute("SELECT * FROM items WHERE status = 'open'").fetchall())
     rows = conn.execute("SELECT * FROM items WHERE status = 'open' AND due_at IS NOT NULL").fetchall()
     stamp = utc(now())
     lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Deadline Radar//EN", "CALSCALE:GREGORIAN",

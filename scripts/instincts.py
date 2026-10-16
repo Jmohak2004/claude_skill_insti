@@ -6,10 +6,10 @@ Pure rules, no LLM, so it is cheap to run every hour.
   instincts.py              check everything, send one combined alert if needed
   instincts.py --digest     morning summary (once per day)
   instincts.py --dry-run    print what would be sent, record nothing
-  RADAR_NOW=2026-10-20T09:00 instincts.py --dry-run    simulate a moment in time
+  instincts.py --dry-run --at 2026-10-20T09:00          simulate a moment in time
 
 Rules (each alert fires once; keys are stored in the `alerts` table):
-  approaching  due within 48h, 24h, 3h (re-arms if the deadline changes)
+  approaching  due within 48h, 24h, 3h; also 72h for high priority (re-arms if the deadline changes)
   overdue      deadline passed and the item is still open (only within 7 days)
   form         form link with no confirmation email yet
   unreplied    someone asked for a reply and nothing was sent in that thread
@@ -83,8 +83,10 @@ def auto_complete(conn, items, write=True):
                 text = f"{msg['subject']}\n{msg['body'] or ''}"
                 if msg["id"] == item["source_message_id"]:
                     continue
-                if (token and token in text) or (
-                    CONFIRM_PATTERNS.search(text) and title_overlap(item["title"], text[:1500]) >= 0.6
+                # A reminder repeats the same link, so the link alone proves nothing:
+                # it must be a confirmation that names this form (by link id or title).
+                if CONFIRM_PATTERNS.search(text) and (
+                    (token and token in text) or title_overlap(item["title"], text[:1500]) >= 0.6
                 ):
                     evidence = f"auto:form-confirmation:{msg['id']}"
                     break
@@ -139,7 +141,8 @@ def collect_alerts(conn, items, current):
                 if -left <= timedelta(days=OVERDUE_GRACE_DAYS):
                     add("overdue", f"{item['id']}:{item['due_at']}:overdue", item, line_for(item, current, "🔴"))
             else:
-                for hours, label in STAGES:
+                stages = STAGES + ([(72, "72h")] if item["priority"] == "high" else [])
+                for hours, label in stages:
                     if left <= timedelta(hours=hours):
                         # Key includes due_at so an extended deadline re-arms its reminders.
                         add("soon", f"{item['id']}:{item['due_at']}:{label}", item, line_for(item, current))
@@ -225,7 +228,10 @@ def main():
     parser.add_argument("--digest", action="store_true", help="send the daily summary")
     parser.add_argument("--dry-run", action="store_true", help="print only, record nothing")
     parser.add_argument("--force", action="store_true", help="ignore quiet hours / already-sent digest")
+    parser.add_argument("--at", help="pretend it is this ISO time (same as RADAR_NOW), e.g. 2026-10-18T09:00")
     args = parser.parse_args()
+    if args.at:
+        os.environ["RADAR_NOW"] = args.at
 
     conn = connect()
     current = now()
@@ -267,7 +273,11 @@ def main():
     if args.dry_run:
         print(text)
         return
-    send(text)
+    try:
+        send(text)
+    except Exception as exc:  # network / provider error: keep alerts unrecorded so the next run retries
+        print(f"Could not send WhatsApp message: {exc}", file=sys.stderr)
+        sys.exit(3)
     stamp = iso(current)
     conn.executemany(
         "INSERT OR IGNORE INTO alerts (key, item_id, sent_at, message) VALUES (?, ?, ?, ?)",

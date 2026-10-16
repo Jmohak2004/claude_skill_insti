@@ -163,6 +163,9 @@ def cmd_add(conn, args):
 
 # ---------------------------------------------------------------- list / status changes
 def cmd_list(conn, args):
+    # Close anything already proven done (form receipt, sent reply) so answers aren't stale.
+    from instincts import auto_complete
+    auto_complete(conn, conn.execute("SELECT * FROM items WHERE status = 'open'").fetchall())
     where = "1=1" if args.all else "status = 'open'"
     rows = conn.execute(f"SELECT * FROM items WHERE {where} ORDER BY due_at IS NULL, due_at").fetchall()
     current = now()
@@ -172,6 +175,7 @@ def cmd_list(conn, args):
     if args.json:
         print(json.dumps([dict(r) for r in rows], indent=1, ensure_ascii=False))
         return
+    print(f"Now: {fmt_due(current)} ({TZ})")
     if not rows:
         print("Nothing on the radar.")
         return
