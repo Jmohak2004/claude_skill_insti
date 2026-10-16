@@ -1,0 +1,8 @@
+# Secrets and personal data normally live in ~/.deadline-radar/, but never commit them if copied here
+.env
+credentials.json
+token.json
+*.db
+extractions/
+logs/
+__pycache__/
