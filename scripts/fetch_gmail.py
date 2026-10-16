@@ -5,6 +5,9 @@ Usage:
   fetch_gmail.py                 # incremental fetch since the last run
   fetch_gmail.py --days 21       # first run / backfill window (default 14)
   fetch_gmail.py --from-json samples/sample_emails.json   # offline demo, no Gmail
+  fetch_gmail.py --auth          # (re)authorise in the browser, e.g. after token expiry
+
+RADAR_OFFLINE=1 skips Gmail entirely (demos, evals).
 
 Inbox messages are stored unprocessed (Claude extracts deadlines from them).
 Sent messages are stored already-processed: they're only used to detect
@@ -20,7 +23,7 @@ import sys
 from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(__file__))
-from common import RADAR_HOME, TZ, connect, get_state, iso, now, set_state  # noqa: E402
+from common import RADAR_HOME, TZ, connect, get_state, iso, norm_ts, now, set_state  # noqa: E402
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 MAX_BODY = 12000
@@ -29,7 +32,11 @@ MAX_ATTACHMENT_TEXT = 6000
 BASE_QUERY = "-in:spam -in:trash -category:promotions -category:social"
 
 
-def get_service():
+class AuthNeeded(Exception):
+    pass
+
+
+def get_service(interactive=False):
     try:
         from google.auth.transport.requests import Request
         from google.oauth2.credentials import Credentials
@@ -43,14 +50,21 @@ def get_service():
     creds = None
     if token_path.exists():
         creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
+    if creds and not creds.valid and creds.expired and creds.refresh_token:
+        try:
             creds.refresh(Request())
-        else:
-            if not secret_path.exists():
-                sys.exit(f"Missing {secret_path}. Follow references/setup.md to create an OAuth client.")
-            flow = InstalledAppFlow.from_client_secrets_file(str(secret_path), SCOPES)
-            creds = flow.run_local_server(port=0)
+        except Exception as exc:  # RefreshError: revoked, or 7-day expiry of "Testing" apps
+            creds = None
+            if not interactive:
+                raise AuthNeeded(f"Gmail token could not be refreshed ({exc}).")
+    if not creds or not creds.valid:
+        if not secret_path.exists():
+            raise AuthNeeded(f"Missing {secret_path}. Follow references/setup.md to create an OAuth client.")
+        # A scheduled (launchd) run has no one to click "Allow"; opening a browser would hang forever.
+        if not (interactive or sys.stdin.isatty()):
+            raise AuthNeeded("Gmail needs re-authorisation: run fetch_gmail.py --auth in a terminal.")
+        flow = InstalledAppFlow.from_client_secrets_file(str(secret_path), SCOPES)
+        creds = flow.run_local_server(port=0)
         token_path.write_text(creds.to_json())
         os.chmod(token_path, 0o600)
     return build("gmail", "v1", credentials=creds, cache_discovery=False)
@@ -112,6 +126,7 @@ def extract_body(service, msg_id, payload):
 
 
 def store(conn, msg):
+    msg = dict(msg, received_at=norm_ts(msg["received_at"]))
     conn.execute(
         """INSERT OR IGNORE INTO messages
            (id, thread_id, sender, recipients, subject, received_at, snippet, body, is_sent, processed)
@@ -121,8 +136,8 @@ def store(conn, msg):
     )
 
 
-def fetch_from_gmail(conn, days):
-    service = get_service()
+def fetch_from_gmail(conn, days, interactive=False):
+    service = get_service(interactive)
     last = get_state(conn, "last_fetch_epoch")
     # 5-minute overlap guards against clock skew; duplicates are ignored by id.
     window = f"after:{int(last) - 300}" if last else f"newer_than:{days}d"
@@ -180,10 +195,25 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--days", type=int, default=14, help="lookback on first run (default 14)")
     parser.add_argument("--from-json", help="load messages from a JSON file instead of Gmail")
+    parser.add_argument("--auth", action="store_true", help="allow the browser sign-in flow")
     args = parser.parse_args()
 
     conn = connect()
-    added = load_from_json(conn, args.from_json) if args.from_json else fetch_from_gmail(conn, args.days)
+    if args.from_json:
+        added = load_from_json(conn, args.from_json)
+    elif os.environ.get("RADAR_OFFLINE"):
+        print("Offline mode (RADAR_OFFLINE): skipped Gmail; working with already-fetched mail.")
+        added = 0
+    else:
+        try:
+            added = fetch_from_gmail(conn, args.days, interactive=args.auth)
+        except Exception as exc:  # auth, network, quota: record it so health.py can warn the user
+            set_state(conn, "last_fetch_error", f"{iso(now())} {type(exc).__name__}: {exc}"[:500])
+            conn.commit()
+            print(f"Gmail fetch failed: {exc}", file=sys.stderr)
+            sys.exit(2)
+        set_state(conn, "last_fetch_ok", iso(now()))
+        set_state(conn, "last_fetch_error", "")
     conn.commit()
     pending = conn.execute("SELECT COUNT(*) FROM messages WHERE processed = 0").fetchone()[0]
     print(f"Fetched {added} new message(s). Pending extraction: {pending}.")

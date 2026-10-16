@@ -4,14 +4,16 @@ Everything user-specific (OAuth tokens, .env, the SQLite db, logs) lives in
 RADAR_HOME (default ~/.deadline-radar), never inside the skill folder, so the
 skill can be shared or re-installed without leaking secrets.
 """
+import glob
 import os
 import re
+import shutil
 import sqlite3
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-RADAR_HOME = Path(os.environ.get("DEADLINE_RADAR_HOME", Path.home() / ".deadline-radar"))
+RADAR_HOME = Path(os.environ.get("DEADLINE_RADAR_HOME", Path.home() / ".deadline-radar")).expanduser().resolve()
 DB_PATH = RADAR_HOME / "radar.db"
 ENV_PATH = RADAR_HOME / ".env"
 
@@ -47,6 +49,35 @@ def parse_dt(value):
     return dt.astimezone(TZ)
 
 
+def norm_ts(value):
+    """Canonical stored form for timestamps, so SQL string comparisons are correct."""
+    return iso(parse_dt(value))
+
+
+def find_claude():
+    """Locate the Claude Code CLI. The VS Code/Cursor extensions bundle it in a
+    versioned folder that changes on every update, so resolve it at run time."""
+    if os.environ.get("CLAUDE_BIN") and os.path.exists(os.environ["CLAUDE_BIN"]):
+        return os.environ["CLAUDE_BIN"]
+    found = shutil.which("claude")
+    if found:
+        return found
+    candidates = []
+    for editor in (".vscode", ".cursor", ".windsurf", ".vscode-insiders"):
+        candidates += glob.glob(str(Path.home() / editor / "extensions" /
+                                    "anthropic.claude-code-*" / "resources" / "native-binary" / "claude"))
+    for path in (Path.home() / ".claude" / "local" / "claude", Path.home() / ".local" / "bin" / "claude"):
+        if path.exists():
+            candidates.append(str(path))
+
+    def version_key(path):
+        m = re.search(r"claude-code-(\d+)\.(\d+)\.(\d+)", path)
+        return tuple(int(x) for x in m.groups()) if m else (0, 0, 0)
+
+    candidates = [c for c in candidates if os.access(c, os.X_OK)]
+    return max(candidates, key=version_key) if candidates else None
+
+
 def now():
     """Current time. RADAR_NOW lets you simulate a different moment for testing."""
     override = os.environ.get("RADAR_NOW")
@@ -54,7 +85,7 @@ def now():
 
 
 def iso(dt):
-    return dt.astimezone(TZ).isoformat(timespec="minutes")
+    return dt.astimezone(TZ).isoformat(timespec="seconds")
 
 
 def norm_title(text):

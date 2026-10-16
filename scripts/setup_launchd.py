@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(__file__))
-from common import RADAR_HOME  # noqa: E402
+from common import RADAR_HOME, find_claude  # noqa: E402
 
 SCRIPTS = Path(__file__).resolve().parent
 AGENTS = Path.home() / "Library" / "LaunchAgents"
@@ -33,13 +33,15 @@ def python_bin():
 
 
 def build(args):
-    claude = shutil.which("claude")
+    # run_scan.sh re-resolves the CLI each run (the VS Code extension's copy moves on update);
+    # this is just an early warning.
+    claude = find_claude()
     if not claude:
-        print("warning: `claude` not found on PATH; the scan job won't be able to extract.", file=sys.stderr)
+        print("warning: Claude Code CLI not found; the scan job won't be able to extract.", file=sys.stderr)
     path_dirs = ["/usr/local/bin", "/opt/homebrew/bin", "/usr/bin", "/bin"]
-    if claude:
-        path_dirs.insert(0, str(Path(claude).parent))
-    env = {"PATH": ":".join(path_dirs), "DEADLINE_RADAR_HOME": str(RADAR_HOME), "CLAUDE_BIN": claude or "claude"}
+    if shutil.which("claude"):
+        path_dirs.insert(0, str(Path(shutil.which("claude")).parent))
+    env = {"PATH": ":".join(path_dirs), "DEADLINE_RADAR_HOME": str(RADAR_HOME)}
     logs = RADAR_HOME / "logs"
     py = python_bin()
 
