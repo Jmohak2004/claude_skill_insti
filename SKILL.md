@@ -11,7 +11,7 @@ The work is split on purpose:
 - **Scripts** do everything that must be exact and cheap: Gmail fetch, storage, timing rules, notifications, calendar export, scheduling.
 - **You** do the part that needs judgment: reading emails and deciding what is a real, actionable deadline.
 
-`SKILL_DIR` below means the folder containing this file. User data lives in `~/.deadline-radar/` (db, `.env`, OAuth token, logs). The data scripts are stdlib-only, so run them with `python3`. `fetch_gmail.py` needs the venv: `~/.deadline-radar/venv/bin/python`.
+`SKILL_DIR` below means the folder containing this file. User data lives in `RADAR_HOME`: `$DEADLINE_RADAR_HOME` if set, else `~/.deadline-radar/` (db, `.env`, OAuth token, logs). The scripts read that variable themselves, so don't override it. The data scripts are stdlib-only. Run them as plain `python3 SKILL_DIR/scripts/<name>.py …` commands, without `cd … &&` or inline env-var prefixes, because scheduled runs only allow `python3` commands. `fetch_gmail.py` needs the venv (`RADAR_HOME/venv/bin/python`).
 
 ## Pick the mode from the request
 
@@ -23,6 +23,8 @@ The work is split on purpose:
 | Preview or send alerts now | `python3 SKILL_DIR/scripts/instincts.py --dry-run` (preview) or without the flag (send) |
 | Morning summary | `instincts.py --digest` (add `--force` to resend today) |
 | Calendar file | `python3 SKILL_DIR/scripts/make_ics.py` and tell them where it was written |
+| Preview a future moment ("alerts tomorrow at 9") | `instincts.py --dry-run --at 2026-10-18T09:00` |
+| Is the radar itself working? | `python3 SKILL_DIR/scripts/health.py --dry-run`, plus `RADAR_HOME/logs/scan.log` |
 | First-time setup or something is broken | Read `references/setup.md` and walk through it step by step |
 
 If the user mentions a deadline in chat ("add: DBMS viva on 24th at 10am"), save it the same way as an extraction, with `source_message_id` omitted.
@@ -30,11 +32,12 @@ If the user mentions a deadline in chat ("add: DBMS viva on 24th at 10am"), save
 ## Extraction loop
 
 1. If the request is to scan fresh mail (not just process what's already pending), fetch first:
-   `~/.deadline-radar/venv/bin/python SKILL_DIR/scripts/fetch_gmail.py`
+   `RADAR_HOME/venv/bin/python SKILL_DIR/scripts/fetch_gmail.py`
+   If it fails (no credentials yet, expired token, offline), don't stop. Tell the user why in one line (setup or `fetch_gmail.py --auth` fixes it) and carry on with the mail already fetched.
 2. Get a batch: `python3 SKILL_DIR/scripts/db.py pending`
    It returns `now`, `timezone`, the currently `open_items`, and up to 20 `messages`.
 3. **Read `references/extraction.md` once per session before the first batch.** It defines what counts, how to resolve dates, and the JSON shape.
-4. Write your extraction JSON to `~/.deadline-radar/extractions/batch-<timestamp>.json`. List **every** message id from the batch in `processed_message_ids`, including ones with nothing actionable, or they come back forever.
+4. Write your extraction JSON to `RADAR_HOME/extractions/batch-<timestamp>.json`. List **every** message id from the batch in `processed_message_ids`, including ones with nothing actionable, or they come back forever.
 5. Save it: `python3 SKILL_DIR/scripts/db.py add <that file>`. The save is all-or-nothing. If it reports errors, fix the JSON and re-run.
 6. Repeat from step 2 while `remaining_after_this_batch` > 0.
 7. Finish with a short summary for the user: new items (title + due), anything auto-updated (extensions, cancellations, completions), anything that looked like a scam, and anything you were unsure about. Then run `instincts.py --dry-run` so they can see what would be sent, unless this is a scheduled run that said not to notify.

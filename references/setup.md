@@ -43,6 +43,8 @@ The Mac must be awake; launchd catches up on missed intervals after sleep. Logs 
 The scan job runs `claude -p` non-interactively with permission only for `python3` commands, Read and Write. If scans log permission errors, run `bash SKILL_DIR/scripts/run_scan.sh` by hand once to see them.
 
 ## Troubleshooting
+- WhatsApp says "Gmail sync is failing" → the token expired or was revoked. Run `RADAR_HOME/venv/bin/python SKILL_DIR/scripts/fetch_gmail.py --auth` in a terminal. Scheduled runs never open a browser; they report the problem instead of hanging.
+- WhatsApp says "Claude couldn't process new mail" → run `bash SKILL_DIR/scripts/run_scan.sh` by hand to see the error. The Claude CLI is found automatically (PATH, then the copy bundled with the VS Code/Cursor extension); set `CLAUDE_BIN` in `.env` to override.
 - `count-pending` keeps growing → extraction is failing. Check `logs/scan.log` and run the extraction loop interactively.
 - No WhatsApp but the log says "Sent" → provider is still `console`, or the CallMeBot key is wrong (re-run `--test`).
 - An alert never fires → `db.py list --all`. The item may be done or snoozed, or its alert key is already in the `alerts` table.
