@@ -1,0 +1,25 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  unit:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Syntax check
+        run: |
+          python -m py_compile scripts/*.py evals/run_evals.py
+          bash -n scripts/run_scan.sh scripts/setup.sh
+          python -c "import json; json.load(open('evals/evals.json')); json.load(open('evals/trigger_evals.json'))"
+      - name: Pipeline tests (no network, no Gmail, no WhatsApp)
+        run: python -m unittest discover -s tests -v

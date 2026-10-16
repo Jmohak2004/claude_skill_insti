@@ -29,10 +29,12 @@ class PipelineTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def run_script(self, name, *args, now=None, check=True):
-        env = dict(self.env, RADAR_NOW=now) if now else self.env
-        result = subprocess.run([sys.executable, str(SCRIPTS / name), *args], env=env,
-                                capture_output=True, text=True)
+    def run_script(self, name, *args, now=None, check=True, env_extra=None, timeout=120):
+        env = dict(self.env, **(env_extra or {}))
+        if now:
+            env["RADAR_NOW"] = now
+        result = subprocess.run([sys.executable, str(SCRIPTS / name), *args], env=env, stdin=subprocess.DEVNULL,
+                                capture_output=True, text=True, timeout=timeout)
         if check and result.returncode != 0:
             self.fail(f"{name} failed:\n{result.stderr}")
         return result
@@ -110,8 +112,84 @@ class PipelineTest(unittest.TestCase):
         out_path = Path(self.tmp.name) / "d.ics"
         self.run_script("make_ics.py", "--out", str(out_path))
         raw = out_path.read_bytes()  # read_text() would turn the required CRLFs into \n
-        self.assertEqual(raw.count(b"BEGIN:VEVENT"), 5)
+        # 5 dated items, minus the Infosys form whose receipt is already in the inbox
+        self.assertEqual(raw.count(b"BEGIN:VEVENT"), 4)
+        self.assertNotIn(b"Infosys placement registration", raw)
         self.assertTrue(all(len(line) <= 75 for line in raw.split(b"\r\n")))
+
+
+    # ------------------------------------------------------------ regressions for audit fixes
+    def test_reminder_with_same_form_link_does_not_complete_form(self):
+        reminder = Path(self.tmp.name) / "reminder.json"
+        reminder.write_text(json.dumps([{
+            "id": "r1", "thread_id": "tr1", "sender": "Student Council", "subject": "Reminder: elective form",
+            "received_at": "2026-10-17T12:00:00+05:30",
+            "body": "Gentle reminder to fill https://forms.gle/ElectSem6Pref9 before allocation."}]))
+        self.run_script("fetch_gmail.py", "--from-json", str(reminder))
+        self.run_script("instincts.py", now="2026-10-17T13:00")
+        self.assertEqual(self.status(6), "open")
+
+    def test_high_priority_gets_72h_warning(self):
+        out = self.run_script("instincts.py", "--dry-run", "--at", "2026-10-21T19:00").stdout
+        self.assertIn("Sem V exam fee", out)  # high priority, due 24 Oct 17:00 -> inside 72h
+
+    def test_timestamps_normalised(self):
+        stored = self.db().execute("SELECT received_at FROM messages WHERE id = 's001'").fetchone()[0]
+        self.assertEqual(stored, "2026-10-14T11:20:00+05:30")
+
+    def test_offline_mode_skips_gmail(self):
+        result = self.run_script("fetch_gmail.py", check=False, env_extra={"RADAR_OFFLINE": "1"})
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("Offline mode", result.stdout)
+
+    def test_headless_fetch_fails_fast_instead_of_hanging(self):
+        result = self.run_script("fetch_gmail.py", check=False, timeout=60)
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_health_reports_gmail_and_extraction_failures(self):
+        conn = self.db()
+        conn.execute("INSERT INTO state VALUES ('last_fetch_error', '2026-10-17T09:00:00+05:30 "
+                     "AuthNeeded: Gmail token could not be refreshed')")
+        conn.execute("INSERT INTO messages (id, subject, received_at, processed) "
+                     "VALUES ('p1', 'x', '2026-10-17T10:00:00+05:30', 0)")
+        conn.commit()
+        out = self.run_script("health.py", "--extract-result", "fail").stdout   # gmail alert (once/day)
+        out += self.run_script("health.py", "--extract-result", "fail").stdout  # streak hits 2 -> extract alert
+        self.assertIn("Gmail sync is failing", out)
+        self.assertIn("--auth", out)
+        self.assertIn("couldn't process new mail on the last 2 scans", out)
+        self.assertIn("already reported", self.run_script("health.py").stdout)
+
+    def test_run_scan_end_to_end_with_stand_in_claude(self):
+        """The real scheduled pipeline (run_scan.sh), with a fake `claude` that applies the seed extraction."""
+        fresh = tempfile.TemporaryDirectory()
+        self.addCleanup(fresh.cleanup)
+        fake = Path(fresh.name) / "fake-claude"
+        fake.write_text(f"#!/bin/bash\n{sys.executable} {SCRIPTS / 'db.py'} add "
+                        f"{ROOT / 'evals' / 'files' / 'seed_extraction.json'}\n")
+        fake.chmod(0o755)
+        env = dict(self.env, DEADLINE_RADAR_HOME=fresh.name, RADAR_OFFLINE="1", CLAUDE_BIN=str(fake))
+        subprocess.run([sys.executable, str(SCRIPTS / "fetch_gmail.py"), "--from-json",
+                        str(ROOT / "samples" / "sample_emails.json")], env=env, check=True, capture_output=True)
+        result = subprocess.run(["bash", str(SCRIPTS / "run_scan.sh")], env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("8 email(s) pending", result.stdout)
+        self.assertIn("Auto-completed: #1 Infosys placement registration", result.stdout)
+        self.assertIn("Radar healthy", result.stdout)
+
+    def test_run_scan_without_claude_raises_health_alert(self):
+        fresh = tempfile.TemporaryDirectory()
+        self.addCleanup(fresh.cleanup)
+        broken = Path(fresh.name) / "broken-claude"
+        broken.write_text("#!/bin/bash\nexit 1\n")
+        broken.chmod(0o755)
+        env = dict(self.env, DEADLINE_RADAR_HOME=fresh.name, RADAR_OFFLINE="1", CLAUDE_BIN=str(broken))
+        subprocess.run([sys.executable, str(SCRIPTS / "fetch_gmail.py"), "--from-json",
+                        str(ROOT / "samples" / "sample_emails.json")], env=env, check=True, capture_output=True)
+        for _ in range(2):
+            result = subprocess.run(["bash", str(SCRIPTS / "run_scan.sh")], env=env, capture_output=True, text=True)
+        self.assertIn("extraction made no progress", result.stdout)
+        self.assertIn("Deadline Radar needs attention", result.stdout)
 
 
 if __name__ == "__main__":

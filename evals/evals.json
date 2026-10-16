@@ -271,7 +271,7 @@
       "expectations": [
         "The agent read references/setup.md",
         "The answer starts with scripts/setup.sh and the Google Cloud OAuth credentials step",
-        "The answer explains the CallMeBot opt-in message and where the API key goes (.env)",
+        "The answer covers the WhatsApp step (CallMeBot or Twilio); details may come in a later turn since setup is step-by-step",
         "The answer does not invent or hard-code any API key or phone number"
       ]
     },
