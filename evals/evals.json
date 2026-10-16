@@ -1,0 +1,310 @@
+{
+  "skill_name": "deadline-radar",
+  "notes": "Each eval runs with DEADLINE_RADAR_HOME pointed at a fresh temp folder and NOTIFY_PROVIDER=console. `setup` commands run first, from the skill root. Replace SKILL_DIR with the skill path. RADAR_NOW pins the clock so date answers are checkable.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "scan-college-inbox",
+      "prompt": "scan my emails and tell me what deadlines i have coming up",
+      "setup": ["python3 scripts/fetch_gmail.py --from-json samples/sample_emails.json"],
+      "env": {"RADAR_NOW": "2026-10-17T11:00"},
+      "files": ["samples/sample_emails.json"],
+      "expected_output": "All 8 messages processed; ~7 items saved; Coursera promo ignored; exam fee uses the extended date; Infosys registration recognised as already filled.",
+      "expectations": [
+        "db.py count-pending returns 0 after the run",
+        "No item is created from the Coursera promotional email (s004)",
+        "The Sem V exam fee item has due_at 2026-10-24T17:00+05:30 (the extended date), not 21 Oct",
+        "The Infosys registration item is status done OR auto-closed by instincts (receipt s006)",
+        "A separate event item exists for the Infosys aptitude test on 2026-10-22 10:00",
+        "The DBMS assignment is due 2026-10-19 10:00 (the Monday after the Thursday email)",
+        "A reply-kind item exists for Prof. Mehta's request with due_at null",
+        "The final answer lists items soonest-first and mentions the fee extension"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "hinglish-relative-date",
+      "prompt": "process my pending emails please",
+      "setup": ["python3 scripts/fetch_gmail.py --from-json evals/files/tricky_inbox.json"],
+      "env": {"RADAR_NOW": "2026-10-17T09:00"},
+      "files": ["evals/files/tricky_inbox.json"],
+      "expected_output": "The Hinglish 'kal tak ... 5 baje' message becomes a lab-manual deadline on Sat 17 Oct 17:00.",
+      "expectations": [
+        "An item for the lab manual submission exists with due_at 2026-10-17T17:00+05:30",
+        "Its action mentions the staff room"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "cancellation-same-batch",
+      "prompt": "go through my new mail and update my radar",
+      "setup": ["python3 scripts/fetch_gmail.py --from-json evals/files/tricky_inbox.json"],
+      "env": {"RADAR_NOW": "2026-10-17T09:00"},
+      "files": ["evals/files/tricky_inbox.json"],
+      "expected_output": "The cancelled guest lecture does not end up as an open item.",
+      "expectations": [
+        "There is no open item for the Cloud Security guest lecture (either absent or status cancelled)",
+        "instincts.py --dry-run output does not mention the guest lecture"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "phishing-not-a-payment",
+      "prompt": "check my inbox for anything i need to pay or submit",
+      "setup": ["python3 scripts/fetch_gmail.py --from-json evals/files/tricky_inbox.json"],
+      "env": {"RADAR_NOW": "2026-10-17T09:00"},
+      "files": ["evals/files/tricky_inbox.json"],
+      "expected_output": "The 'pay Rs 999 processing fee' scholarship email from a gmail.com address is not saved as a payment and is flagged as suspicious.",
+      "expectations": [
+        "No open payment item is created from message t10",
+        "The final answer warns the user that t10 looks like a scam/phishing email",
+        "No item is created from the OTP email (t04) or the UpSkillNow webinar (t05)"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "reminder-no-duplicate",
+      "prompt": "scan pending emails",
+      "setup": ["python3 scripts/fetch_gmail.py --from-json evals/files/tricky_inbox.json"],
+      "env": {"RADAR_NOW": "2026-10-17T09:00"},
+      "files": ["evals/files/tricky_inbox.json"],
+      "expected_output": "The SIH original + reminder produce exactly one form item.",
+      "expectations": [
+        "Exactly one open item has form_url https://forms.gle/SIHinternal2026",
+        "That item has kind form and due_at on 2026-10-22"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "deadline-inside-pdf",
+      "prompt": "did any of my college notices have deadlines in the attachments?",
+      "setup": ["python3 scripts/fetch_gmail.py --from-json evals/files/tricky_inbox.json"],
+      "env": {"RADAR_NOW": "2026-10-17T09:00"},
+      "files": ["evals/files/tricky_inbox.json"],
+      "expected_output": "Scholarship renewal deadline (30 Oct, 3 PM) is extracted from the attachment text even though the body just says 'see attached'.",
+      "expectations": [
+        "An item for the scholarship renewal exists with due_at 2026-10-30T15:00+05:30",
+        "The item's action or notes lists the documents (income certificate, fee receipt, Aadhaar)"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "indian-date-format",
+      "prompt": "process my emails and list everything for november",
+      "setup": ["python3 scripts/fetch_gmail.py --from-json evals/files/tricky_inbox.json"],
+      "env": {"RADAR_NOW": "2026-10-17T09:00"},
+      "files": ["evals/files/tricky_inbox.json"],
+      "expected_output": "'10/11' is read as 10 November (day/month), and 26/10 as 26 October.",
+      "expectations": [
+        "The IA-1 marks query item is due on 2026-11-10 (not October 11)",
+        "The IA-2 Data Structures event is on 2026-10-26 at 09:30",
+        "The final answer for November includes the marks query item"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "peer-eod-request",
+      "prompt": "anything people are waiting on me for?",
+      "setup": ["python3 scripts/fetch_gmail.py --from-json evals/files/tricky_inbox.json"],
+      "env": {"RADAR_NOW": "2026-10-17T09:00"},
+      "files": ["evals/files/tricky_inbox.json"],
+      "expected_output": "Priya's 'send your slides by EOD tomorrow' becomes an item due Fri 16 Oct 18:00 (estimated) and is reported as already overdue.",
+      "expectations": [
+        "An item for the OS presentation slides exists with due_at 2026-10-16T18:00+05:30",
+        "That item has due_is_estimated = 1",
+        "The final answer tells the user this one is already overdue"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "within-72-hours",
+      "prompt": "check my internship mails and track all the deadlines",
+      "setup": ["python3 scripts/fetch_gmail.py --from-json evals/files/internship_inbox.json"],
+      "env": {"RADAR_NOW": "2026-10-17T10:00"},
+      "files": ["evals/files/internship_inbox.json"],
+      "expected_output": "HackerRank 'within 72 hours of receiving' resolves to 19 Oct 10:00, with the test link saved.",
+      "expectations": [
+        "The Acme assessment item has due_at 2026-10-19T10:00+05:30",
+        "The item includes the hackerrank.com test link",
+        "The item has priority high"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "working-days-offer",
+      "prompt": "track my internship offer deadlines",
+      "setup": ["python3 scripts/fetch_gmail.py --from-json evals/files/internship_inbox.json"],
+      "env": {"RADAR_NOW": "2026-10-17T10:00"},
+      "files": ["evals/files/internship_inbox.json"],
+      "expected_output": "'5 working days' from Fri 16 Oct resolves to Fri 23 Oct (estimated), and the agent notes possible holidays.",
+      "expectations": [
+        "The BrightLabs offer acceptance item is due on 2026-10-23",
+        "The item has due_is_estimated = 1",
+        "The item has priority high"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "interview-event-plus-reply",
+      "prompt": "process pending emails",
+      "setup": ["python3 scripts/fetch_gmail.py --from-json evals/files/internship_inbox.json"],
+      "env": {"RADAR_NOW": "2026-10-17T10:00"},
+      "files": ["evals/files/internship_inbox.json"],
+      "expected_output": "Recruiter email yields both an event (interview 21 Oct 15:00) and a reply item (confirm availability).",
+      "expectations": [
+        "An event item for the Acme interview exists with due_at 2026-10-21T15:00+05:30",
+        "A reply-kind item exists for confirming availability, linked to message i02",
+        "No item is created from the LinkedIn notification (i04)",
+        "The Microsoft Engage application is not left open (created done, or omitted), because i06b confirms submission",
+        "Flipkart GRiD registration is due 2026-10-17T23:59+05:30"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "whats-due-this-week",
+      "prompt": "what's due this week?",
+      "setup": [
+        "python3 scripts/fetch_gmail.py --from-json samples/sample_emails.json",
+        "python3 scripts/db.py add evals/files/seed_extraction.json"
+      ],
+      "env": {"RADAR_NOW": "2026-10-17T11:00"},
+      "files": [],
+      "expected_output": "Answers from the database without re-extracting: DBMS assignment and CN journal (Mon), Infosys test (Thu), fee (Sat 24).",
+      "expectations": [
+        "The agent ran db.py list (no re-extraction, no Gmail fetch)",
+        "The answer lists DBMS assignment 3 and the CN lab journal for Monday 19 Oct",
+        "Items are ordered soonest first",
+        "The answer points out the two Monday deadlines are close together"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "mark-done-and-snooze",
+      "prompt": "i submitted the DBMS assignment. also snooze the elective form thing for a day",
+      "setup": [
+        "python3 scripts/fetch_gmail.py --from-json samples/sample_emails.json",
+        "python3 scripts/db.py add evals/files/seed_extraction.json"
+      ],
+      "env": {"RADAR_NOW": "2026-10-17T11:00"},
+      "files": [],
+      "expected_output": "Item #5 marked done; item #6 snoozed ~24h.",
+      "expectations": [
+        "Item 5 (DBMS assignment 3) has status done",
+        "Item 6 (elective form) has snoozed_until about 24 hours after RADAR_NOW",
+        "No other items changed status"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "did-i-miss-anything",
+      "prompt": "did i miss anything??",
+      "setup": [
+        "python3 scripts/fetch_gmail.py --from-json samples/sample_emails.json",
+        "python3 scripts/db.py add evals/files/seed_extraction.json"
+      ],
+      "env": {"RADAR_NOW": "2026-10-19T10:30"},
+      "files": [],
+      "expected_output": "Reports DBMS assignment 3 as overdue (30 min ago) and the CN journal due in ~2.5h; mentions the unfilled elective form.",
+      "expectations": [
+        "The answer says DBMS assignment 3 is overdue",
+        "The answer flags the CN lab journal as due within 3 hours",
+        "The answer mentions the elective form has not been filled",
+        "The answer does not list the Infosys registration as missed (its receipt exists)"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "add-from-chat",
+      "prompt": "add to my radar: DBMS viva on 24th at 10am, its important",
+      "setup": [],
+      "env": {"RADAR_NOW": "2026-10-17T11:00"},
+      "files": [],
+      "expected_output": "Creates an event item due 2026-10-24 10:00, high priority, without a source message.",
+      "expectations": [
+        "An item with kind event and title mentioning DBMS viva exists",
+        "Its due_at is 2026-10-24T10:00+05:30",
+        "Its priority is high"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "export-calendar",
+      "prompt": "can you put all my deadlines in google calendar",
+      "setup": [
+        "python3 scripts/fetch_gmail.py --from-json samples/sample_emails.json",
+        "python3 scripts/db.py add evals/files/seed_extraction.json"
+      ],
+      "env": {"RADAR_NOW": "2026-10-17T11:00"},
+      "files": [],
+      "expected_output": "Runs make_ics.py, gives the .ics path, explains how to import it into Google Calendar.",
+      "expectations": [
+        "A deadlines.ics file exists in DEADLINE_RADAR_HOME",
+        "The .ics contains one VEVENT per open dated item",
+        "The answer explains how to import the file (Google Calendar → Settings → Import)"
+      ]
+    },
+    {
+      "id": 17,
+      "name": "preview-tomorrow-alerts",
+      "prompt": "what whatsapp alerts would i get tomorrow morning at 9?",
+      "setup": [
+        "python3 scripts/fetch_gmail.py --from-json samples/sample_emails.json",
+        "python3 scripts/db.py add evals/files/seed_extraction.json"
+      ],
+      "env": {"RADAR_NOW": "2026-10-17T11:00"},
+      "files": [],
+      "expected_output": "Runs instincts.py --dry-run with RADAR_NOW=2026-10-18T09:00 and shows the message without sending or recording it.",
+      "expectations": [
+        "The agent ran instincts.py with --dry-run and RADAR_NOW set to 2026-10-18 around 09:00",
+        "The alerts table is still empty after the run",
+        "The shown preview includes the DBMS assignment and CN journal as due soon"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "first-time-setup",
+      "prompt": "i want to set this up so i get whatsapp messages when something is due. how do i start?",
+      "setup": [],
+      "env": {},
+      "files": [],
+      "expected_output": "Walks through references/setup.md one step at a time (setup.sh, Google OAuth client, CallMeBot, test, launchd) without inventing keys.",
+      "expectations": [
+        "The agent read references/setup.md",
+        "The answer starts with scripts/setup.sh and the Google Cloud OAuth credentials step",
+        "The answer explains the CallMeBot opt-in message and where the API key goes (.env)",
+        "The answer does not invent or hard-code any API key or phone number"
+      ]
+    },
+    {
+      "id": 19,
+      "name": "debug-pending-growing",
+      "prompt": "my whatsapp alerts stopped and count-pending keeps going up every day, whats wrong",
+      "setup": ["python3 scripts/fetch_gmail.py --from-json samples/sample_emails.json"],
+      "env": {"RADAR_NOW": "2026-10-17T11:00"},
+      "files": [],
+      "expected_output": "Diagnoses failing extraction (checks logs/scan.log or runs the scan), then processes the backlog interactively.",
+      "expectations": [
+        "The agent checks ~/.deadline-radar/logs or runs run_scan.sh / the extraction loop",
+        "The agent explains that pending growing means the Claude extraction step is failing",
+        "By the end, count-pending is 0 or the agent gives a concrete fix"
+      ]
+    },
+    {
+      "id": 20,
+      "name": "hinglish-user-query",
+      "prompt": "bhai kal kya kya submit karna hai? aur koi form bacha hai kya?",
+      "setup": [
+        "python3 scripts/fetch_gmail.py --from-json samples/sample_emails.json",
+        "python3 scripts/db.py add evals/files/seed_extraction.json"
+      ],
+      "env": {"RADAR_NOW": "2026-10-18T20:00"},
+      "files": [],
+      "expected_output": "Understands 'kal' = Mon 19 Oct: DBMS assignment (10 AM) + CN journal (1 PM); pending form = Sem VI elective preference form. Replies in the user's register.",
+      "expectations": [
+        "The answer lists DBMS assignment 3 and CN lab journal for tomorrow",
+        "The answer mentions the Sem VI elective preference form as pending",
+        "The answer does not list Infosys registration as a pending form"
+      ]
+    }
+  ]
+}

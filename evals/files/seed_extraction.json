@@ -1,0 +1,9 @@
+{"items":[
+ {"title":"Infosys placement registration","kind":"form","action":"Fill the registration form (CGPA ≥ 7, no live KTs)","due_at":"2026-10-18T18:00:00+05:30","priority":"high","form_url":"https://docs.google.com/forms/d/e/1FAIpQLSd8kInfosysDrive2027RegXyZ/viewform","source_message_id":"s001"},
+ {"title":"Infosys aptitude test","kind":"event","action":"Attend the test in Main Auditorium, carry college ID","due_at":"2026-10-22T10:00:00+05:30","priority":"high","source_message_id":"s001"},
+ {"title":"Sem V exam fee","kind":"payment","action":"Pay ₹1,500 on the ERP portal","due_at":"2026-10-24T17:00:00+05:30","priority":"high","source_message_id":"s002","notes":"Extended from 21 Oct (mail 17 Oct)"},
+ {"title":"Reply to Prof. Mehta: DBMS mini-project group","kind":"reply","action":"Reply with group members and topic","source_message_id":"s003"},
+ {"title":"DBMS assignment 3 (Normalization)","kind":"deadline","action":"Submit on Google Classroom","due_at":"2026-10-19T10:00:00+05:30","priority":"medium","source_message_id":"s003"},
+ {"title":"Sem VI elective preference form","kind":"form","action":"Fill elective preferences (first come first serve)","priority":"high","form_url":"https://forms.gle/ElectSem6Pref9","source_message_id":"s005"},
+ {"title":"CN lab journal submission","kind":"deadline","action":"Submit signed journals (exp 1-6) in the lab","due_at":"2026-10-19T13:00:00+05:30","priority":"medium","source_message_id":"s008"}
+],"completions":[],"processed_message_ids":["s001","s002","s003","s004","s005","s006","s007","s008"]}

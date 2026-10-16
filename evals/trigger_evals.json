@@ -1,0 +1,22 @@
+[
+  {"query": "can u go through my gmail and find all the assignment and exam deadlines for this month, i keep missing stuff", "should_trigger": true},
+  {"query": "TPO sends like 10 mails a day about placement drives, I need something that tells me which registrations close soon", "should_trigger": true},
+  {"query": "what's due this week?", "should_trigger": true},
+  {"query": "did I fill the elective preference form or not? I think there was a google form in my mail last week", "should_trigger": true},
+  {"query": "mark the DBMS assignment as done and snooze the hackathon one till tomorrow", "should_trigger": true},
+  {"query": "i want whatsapp reminders before my college fee deadline, can you set that up with my gmail", "should_trigger": true},
+  {"query": "export the deadlines you found in my inbox to a calendar file so I can import into google calendar", "should_trigger": true},
+  {"query": "prof mehta mailed me asking something like 3 days ago, did I ever reply? also anything else I'm ignoring", "should_trigger": true},
+  {"query": "my deadline radar alerts stopped coming on whatsapp since yesterday, launchd log says something about claude", "should_trigger": true},
+  {"query": "send me a morning summary of what's pending from my emails", "should_trigger": true},
+  {"query": "write a polite email to my professor asking for a 2 day extension on the DBMS assignment", "should_trigger": false},
+  {"query": "build me a react todo app with due dates and a reminder notification", "should_trigger": false},
+  {"query": "how do I use the Gmail API in python to send an email with an attachment", "should_trigger": false},
+  {"query": "create a google form for our college fest volunteer registration with name, branch and year", "should_trigger": false},
+  {"query": "write a python script that sends a whatsapp message using twilio when my server goes down", "should_trigger": false},
+  {"query": "convert this exam timetable pdf into an excel sheet", "should_trigger": false},
+  {"query": "what's the deadline for filing ITR this year in india?", "should_trigger": false},
+  {"query": "summarize this long email thread from my manager about the Q3 roadmap", "should_trigger": false},
+  {"query": "set up a cron job that backs up my ~/projects folder to an external drive every night", "should_trigger": false},
+  {"query": "make me a study plan for my end-sem exams starting 26 nov, 5 subjects", "should_trigger": false}
+]

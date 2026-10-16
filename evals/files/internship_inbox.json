@@ -1,0 +1,58 @@
+[
+  {
+    "id": "i01",
+    "thread_id": "ih01",
+    "sender": "HackerRank for Work <no-reply@hackerrank.com>",
+    "subject": "Invitation: Acme Corp Software Engineer Intern assessment",
+    "received_at": "2026-10-16T10:00:00+05:30",
+    "body": "Hi, Acme Corp has invited you to take the Software Engineer Intern coding assessment (90 minutes). Please complete the test within 72 hours of receiving this email. Start test: https://www.hackerrank.com/test/acme-swe-intern-2027"
+  },
+  {
+    "id": "i02",
+    "thread_id": "ih02",
+    "sender": "Neha Kapoor (Talent Acquisition) <neha.k@acme.example.com>",
+    "subject": "Technical interview - Acme Corp",
+    "received_at": "2026-10-16T17:30:00+05:30",
+    "body": "Hi, congratulations on clearing the online assessment. We'd like to schedule your technical interview on Wednesday, 21 October at 3:00 PM IST over Google Meet. Please confirm your availability by replying to this email."
+  },
+  {
+    "id": "i03",
+    "thread_id": "ih03",
+    "sender": "HR - BrightLabs <hr@brightlabs.example.com>",
+    "subject": "Internship Offer - BrightLabs",
+    "received_at": "2026-10-16T12:00:00+05:30",
+    "body": "We are pleased to offer you a 6-month internship. Kindly accept the offer by signing and returning the attached offer letter within 5 working days of this email. The offer lapses otherwise."
+  },
+  {
+    "id": "i04",
+    "thread_id": "ih04",
+    "sender": "LinkedIn <notifications@linkedin.com>",
+    "subject": "You appeared in 12 searches this week",
+    "received_at": "2026-10-17T07:00:00+05:30",
+    "body": "See who's looking at your profile. Try Premium free for 1 month."
+  },
+  {
+    "id": "i05",
+    "thread_id": "ih05",
+    "sender": "Unstop <noreply@unstop.example.com>",
+    "subject": "Flipkart GRiD 7.0 registrations close TONIGHT",
+    "received_at": "2026-10-17T09:00:00+05:30",
+    "body": "Last call! Flipkart GRiD 7.0 registrations close tonight at 11:59 PM. Register: https://unstop.example.com/flipkart-grid-7"
+  },
+  {
+    "id": "i06a",
+    "thread_id": "ih06",
+    "sender": "Microsoft Careers <careers@microsoft.example.com>",
+    "subject": "Applications open: Microsoft Engage 2027",
+    "received_at": "2026-10-12T10:00:00+05:30",
+    "body": "Applications for Microsoft Engage 2027 mentorship are open till 25 October 2026. Apply at https://careers.microsoft.example.com/engage"
+  },
+  {
+    "id": "i06b",
+    "thread_id": "ih06b",
+    "sender": "Microsoft Careers <careers@microsoft.example.com>",
+    "subject": "Your application to Microsoft Engage 2027 was submitted",
+    "received_at": "2026-10-14T19:00:00+05:30",
+    "body": "Thank you for applying. We have received your application for Microsoft Engage 2027. Shortlisted candidates will be contacted by email."
+  }
+]

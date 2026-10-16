@@ -1,0 +1,98 @@
+[
+  {
+    "id": "t01",
+    "thread_id": "th01",
+    "sender": "Class Representative <cr.tyit@college.example.edu>",
+    "subject": "Fwd: IA-2 Schedule and marks query window",
+    "received_at": "2026-10-15T18:10:00+05:30",
+    "body": "---------- Forwarded message ---------\nFrom: Exam Cell\n\nDear students,\n1) IA-2 for Data Structures will be conducted on 26/10 at 9:30 AM in Room 304.\n2) Students with queries regarding IA-1 marks must submit the query form by 10/11 at the exam cell window.\n\nRegards, Exam Cell"
+  },
+  {
+    "id": "t02",
+    "thread_id": "th02",
+    "sender": "Rohan (CR) <rohan.cr@college.example.edu>",
+    "subject": "lab manual!!",
+    "received_at": "2026-10-16T20:05:00+05:30",
+    "body": "Guys kal tak lab manual sir ko submit karna hai, 5 baje tak staff room mein. Don't forget, sir ne bola late submission nahi lenge."
+  },
+  {
+    "id": "t03a",
+    "thread_id": "th03",
+    "sender": "HOD Office <hod.it@college.example.edu>",
+    "subject": "Mandatory guest lecture on Cloud Security",
+    "received_at": "2026-10-13T10:00:00+05:30",
+    "body": "All TY students must attend the guest lecture on Cloud Security on 20th October 2026, 2:00 PM, Seminar Hall. Attendance is mandatory."
+  },
+  {
+    "id": "t03b",
+    "thread_id": "th03",
+    "sender": "HOD Office <hod.it@college.example.edu>",
+    "subject": "Re: Mandatory guest lecture on Cloud Security - CANCELLED",
+    "received_at": "2026-10-16T09:30:00+05:30",
+    "body": "Due to unavoidable circumstances, the guest lecture scheduled on 20th October is cancelled. New date will be communicated later."
+  },
+  {
+    "id": "t04",
+    "thread_id": "th04",
+    "sender": "ERP Portal <noreply@erp.college.example.edu>",
+    "subject": "Your OTP for login",
+    "received_at": "2026-10-16T11:00:00+05:30",
+    "body": "Your one-time password is 482913. It expires in 10 minutes. Do not share it with anyone."
+  },
+  {
+    "id": "t05",
+    "thread_id": "th05",
+    "sender": "UpSkillNow <hello@upskillnow.example.com>",
+    "subject": "LAST CHANCE: Register for our FREE Data Science webinar by Sunday!",
+    "received_at": "2026-10-16T12:00:00+05:30",
+    "body": "Seats filling fast! Register by Sunday 18 Oct to get a free certificate. https://upskillnow.example.com/webinar"
+  },
+  {
+    "id": "t06a",
+    "thread_id": "th06",
+    "sender": "Innovation Cell <ecell@college.example.edu>",
+    "subject": "Smart India Hackathon - internal round registration",
+    "received_at": "2026-10-12T15:00:00+05:30",
+    "body": "Teams of 6 must register for the SIH internal round by 22 Oct 2026 using https://forms.gle/SIHinternal2026 . Each team needs at least one female member."
+  },
+  {
+    "id": "t06b",
+    "thread_id": "th06b",
+    "sender": "Innovation Cell <ecell@college.example.edu>",
+    "subject": "Reminder: SIH registration closes 22 Oct",
+    "received_at": "2026-10-16T15:00:00+05:30",
+    "body": "Gentle reminder - SIH internal round registration closes on 22 Oct. Form: https://forms.gle/SIHinternal2026"
+  },
+  {
+    "id": "t07",
+    "thread_id": "th07",
+    "sender": "Scholarship Section <scholarship@college.example.edu>",
+    "subject": "Notice",
+    "received_at": "2026-10-15T12:00:00+05:30",
+    "body": "Please find the attached notice.\n\n[Attachment: notice_scholarship.pdf]\nPost-Matric Scholarship renewal 2026-27: Eligible students must submit the following documents at the scholarship office by 30 October 2026, 3:00 PM: income certificate, previous year fee receipt, Aadhaar copy."
+  },
+  {
+    "id": "t08",
+    "thread_id": "th08",
+    "sender": "Priya Shah <priya.s@college.example.edu>",
+    "subject": "OS presentation",
+    "received_at": "2026-10-15T13:00:00+05:30",
+    "body": "Hey! Can you send me your part of the OS presentation slides (deadlock section) by EOD tomorrow? I'll merge everything on Saturday."
+  },
+  {
+    "id": "t09",
+    "thread_id": "th09",
+    "sender": "Central Library <library@college.example.edu>",
+    "subject": "Book due reminder",
+    "received_at": "2026-10-16T08:00:00+05:30",
+    "body": "The book 'Operating System Concepts (10th ed)' issued to you is due for return on 19-Oct-2026. A fine of Rs 5 per day applies after the due date."
+  },
+  {
+    "id": "t10",
+    "thread_id": "th10",
+    "sender": "Govt Scholarship Dept <scholarship.approval2026@gmail.com>",
+    "subject": "Congratulations! Your scholarship of Rs 50,000 is APPROVED",
+    "received_at": "2026-10-16T22:00:00+05:30",
+    "body": "Dear student, your scholarship of Rs 50,000 is approved. To release the amount pay a processing fee of Rs 999 within 24 hours at http://bit.ly/sch-release-fee . Failure will cancel your scholarship."
+  }
+]
