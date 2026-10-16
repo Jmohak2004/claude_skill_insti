@@ -1,0 +1,66 @@
+[
+  {
+    "id": "s001",
+    "thread_id": "t001",
+    "sender": "Training & Placement Cell <tpo@college.example.edu>",
+    "subject": "Infosys Campus Drive 2027 batch - Registration Mandatory",
+    "received_at": "2026-10-14T11:20:00+05:30",
+    "body": "Dear Students,\n\nInfosys is visiting campus for the 2027 batch (Specialist Programmer & Systems Engineer roles).\n\nEligibility: CGPA >= 7.0, no live KTs.\n\nAll interested students must register using the form below on or before 18/10/2026, 6:00 PM. Late registrations will NOT be accepted.\n\nRegistration form: https://docs.google.com/forms/d/e/1FAIpQLSd8kInfosysDrive2027RegXyZ/viewform\n\nThe online aptitude test will be held on 22nd October at 10:00 AM in the Main Auditorium. Carry your college ID.\n\nRegards,\nT&P Cell"
+  },
+  {
+    "id": "s002",
+    "thread_id": "t002",
+    "sender": "Accounts Section <accounts@college.example.edu>",
+    "subject": "Circular: Semester V Examination Fee",
+    "received_at": "2026-10-15T09:05:00+05:30",
+    "body": "This is to inform all TY students that the Semester V examination fee of Rs. 1,500 must be paid through the ERP portal. Last date: 21-10-2026. A late fee of Rs. 500 per day will be charged thereafter.\n\n[Attachment: Exam_fee_circular.pdf]\nExamination fee circular. Students with pending dues will not receive hall tickets."
+  },
+  {
+    "id": "s003",
+    "thread_id": "t003",
+    "sender": "Prof. R. Mehta <rmehta@college.example.edu>",
+    "subject": "DBMS mini project - group details",
+    "received_at": "2026-10-15T16:40:00+05:30",
+    "body": "Hi,\n\nYou haven't sent me your mini-project group members and topic yet. Please reply to this email with your group and topic so I can approve it.\n\nAlso, Assignment 3 (Normalization) is due this Monday before the lecture (10 AM). Submit on Google Classroom.\n\nThanks,\nR. Mehta"
+  },
+  {
+    "id": "s004",
+    "thread_id": "t004",
+    "sender": "Coursera <no-reply@coursera.org>",
+    "subject": "Top picks for you this week: Machine Learning, Data Science and more",
+    "received_at": "2026-10-16T08:00:00+05:30",
+    "body": "Learn something new this week! Enroll by October 31 to get 50% off Coursera Plus. Recommended: Machine Learning Specialization, Google Data Analytics..."
+  },
+  {
+    "id": "s005",
+    "thread_id": "t005",
+    "sender": "Student Council <council@college.example.edu>",
+    "subject": "Fill the Elective Preference Form (Sem VI)",
+    "received_at": "2026-10-13T12:00:00+05:30",
+    "body": "Hello everyone, please fill your Sem VI open elective preferences here: https://forms.gle/ElectSem6Pref9 . Allocation is first come first serve, so fill it soon!"
+  },
+  {
+    "id": "s006",
+    "thread_id": "t006",
+    "sender": "Google Forms <forms-receipts-noreply@google.com>",
+    "subject": "Thanks for filling out Infosys Campus Drive 2027 Registration",
+    "received_at": "2026-10-16T21:15:00+05:30",
+    "body": "Thanks for filling out Infosys Campus Drive 2027 Registration. Here's what was received. Your response has been recorded. View form: https://docs.google.com/forms/d/e/1FAIpQLSd8kInfosysDrive2027RegXyZ/viewform"
+  },
+  {
+    "id": "s007",
+    "thread_id": "t002",
+    "sender": "Accounts Section <accounts@college.example.edu>",
+    "subject": "Re: Circular: Semester V Examination Fee - DATE EXTENDED",
+    "received_at": "2026-10-17T10:30:00+05:30",
+    "body": "Due to ERP server issues, the last date for Semester V exam fee payment has been extended to 24-10-2026 (5 PM). No late fee till then."
+  },
+  {
+    "id": "s008",
+    "thread_id": "t008",
+    "sender": "Lab Incharge <cnlab@college.example.edu>",
+    "subject": "CN Lab journal submission",
+    "received_at": "2026-10-16T14:00:00+05:30",
+    "body": "Submit your Computer Networks lab journals (experiments 1-6), signed, in the lab by Monday 19th Oct, 1 PM. Unsigned journals will not be accepted."
+  }
+]
