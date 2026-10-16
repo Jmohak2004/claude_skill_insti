@@ -4,12 +4,13 @@
 
 Deadline Radar is a [Claude Code](https://claude.com/claude-code) skill. It reads your Gmail (read-only) and pulls out every deadline, Google Form and "please reply" request from circulars, placement mails, fee notices and professors' emails. Then it **nudges you on WhatsApp**:
 
-- ⏰ **Due soon**: 48h, 24h and 3h before each deadline
+- ⏰ **Due soon**: 48h, 24h and 3h before each deadline (plus 72h for high-priority items)
 - 🔴 **Overdue**: you missed it and it's still open
 - 📝 **Form not filled**: a form link arrived, but no "Your response has been recorded" email ever did
 - ↩️ **Waiting on your reply**: someone asked you to respond, and nothing is in your Sent folder for that thread
 - ⚠️ **Pile-up**: three things land on the same day
 - ☀️ **Morning digest**: today, this week, pending forms and replies
+- 🛠️ **Self-check**: if Gmail sign-in expires or Claude can't process mail, you get a message about the radar itself instead of a silent radar
 
 It also **closes items by itself** when it sees the proof (a form receipt in your inbox or your reply in the thread), so you don't have to tick things off by hand.
 
@@ -58,9 +59,10 @@ The split is deliberate:
 | `scripts/fetch_gmail.py` | Gmail fetch with the `gmail.readonly` scope; picks up only new mail and extracts PDF attachment text |
 | `scripts/db.py` | Pending batches, all-or-nothing saves with validation, list/done/snooze |
 | `scripts/instincts.py` | Alert rules, auto-completion, quiet hours, digest |
+| `scripts/health.py` | Warns you when Gmail sync or extraction is failing |
 | `scripts/notify_whatsapp.py` | CallMeBot / Twilio / console |
 | `scripts/make_ics.py` | Calendar export with reminders |
-| `scripts/setup_launchd.py` | macOS scheduling |
+| `scripts/setup_launchd.py` | macOS scheduling (finds the Claude CLI even when it is bundled inside VS Code) |
 
 ## Install
 
@@ -110,9 +112,14 @@ Things you can say to Claude once the skill is installed:
 
 ## Testing
 
+[![tests](https://github.com/Jmohak2004/claude_skill_insti/actions/workflows/tests.yml/badge.svg)](https://github.com/Jmohak2004/claude_skill_insti/actions/workflows/tests.yml)
+
 ```bash
-python3 -m unittest discover -s tests -v    # 11 end-to-end tests of the scripts, no network
+python3 -m unittest discover -s tests -v    # 19 pipeline tests, no network (also run in CI)
+python3 evals/run_evals.py --jobs 5         # 20 prompts through real headless Claude, auto-graded
 ```
+
+The unit tests include the real scheduled job (`run_scan.sh`) run with a stand-in for Claude, and with a broken Claude to check that the health alert fires. `run_evals.py` gives each prompt a fresh data folder, runs `claude -p` with the same restricted permissions as the scheduled job, and grades the resulting database, `.ics` file and answer. It writes `summary.md` plus a `grading.json` per eval.
 
 - [`evals/evals.json`](evals/evals.json): **20 test prompts** with checkable expectations for Claude's side. They cover Hinglish dates, a cancellation in the same batch, scam detection, duplicate reminders, deadlines inside PDF attachments, DD/MM dates, "within 72 hours", "5 working days", and an interview that is both an event and a reply. They run against [`evals/files/`](evals/files/) and can be run with the [skill-creator](https://github.com/anthropics/skills) eval loop.
 - [`evals/trigger_evals.json`](evals/trigger_evals.json): **20 trigger queries**. Ten should activate the skill and ten are near-misses that shouldn't (for example "write an email asking for an extension" or "Gmail API send example"). Use these to tune the skill's description.
